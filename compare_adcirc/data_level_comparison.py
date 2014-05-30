@@ -10,6 +10,7 @@
 # see netcdf_demo.py for example stuff
 
 import sys
+from subprocess import call
 from Scientific.N import *
 from Scientific.IO.NetCDF import *
 import time
@@ -21,6 +22,10 @@ if (len(sys.argv) != 4):
 file1_name=str(sys.argv[1])
 file2_name=str(sys.argv[2])
 outfile_name=str(sys.argv[3])
+
+#Copy the first file to the outfile
+call(["nccopy",file1_name,outfile_name])
+
 
 #Read in input files
 file1 = NetCDFFile(file1_name, 'r')
