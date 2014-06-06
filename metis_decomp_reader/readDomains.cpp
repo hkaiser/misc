@@ -1,6 +1,7 @@
 #include <iostream>
 #include <fstream>
 #include <stdexcept>
+#include <vector>
 
 class SimpleDomain
 {
@@ -95,6 +96,9 @@ private:
                 throw std::runtime_error("buf does not match domain");
             }
             meshFile >> numNodes;
+            //Discard rest of the line
+            std::getline(meshFile, buffer);
+            
             std::cerr << "Domain: " << domain << " numNodes: " << numNodes << "\n";
             
             for (int node = 0; node < numNodes; ++node) {
@@ -107,16 +111,27 @@ private:
             // throw away the rest of the line
             std::getline(meshFile, buffer);
         }
-        
+        // Throw away another line
+        std::getline(meshFile, buffer);
+        std::vector<int> ownerID;
+        for (int node = 0; node < numberOfPoints; node++) {
+            int global_label;
+            int local_label;
+            int owner;
+            meshFile >> global_label;
+            meshFile >> owner;
+            meshFile >> local_label;
             
+            std::getline(meshFile, buffer);//discard rest of line
             
-        
-    }
-    
-        
-        
-        
-    
+            ownerID.push_back(owner);
+        }
+
+        for (int i=0; i< numberOfPoints; i++){
+            std::cerr << i << " " << ownerID[i] << "\n";
+        }
+            
+    }    
 };
 
     
