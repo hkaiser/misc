@@ -1,0 +1,62 @@
+driver.F - 
+  Contains:
+  PROGRAM ADCIRC
+    Calls:
+    ADCIRC_Init()
+    ADCIRC_Run()
+    ADCIRC_Final()
+
+adcirc.F - 
+  Contains:
+  SUBROUTINE ADCIRC_Init(COMM, ROOTD)
+    Calls:
+    MSG_INIT(COMM) <- messenger.F
+    WRITER_INIT    
+    HSWRITER_INIT
+    READ_INPUT
+    MSG_TABLE      <- messenger.F
+    MSG_START      <- messenger.F
+
+messenger.F - 
+  Contains:
+  SUBROUTINE MSG_INIT(MPI_COMM)
+    Calls:
+    MPI_INIT(IERR)
+    MPI_COMM_DUP(MPI_COMM_WORLD,MPI_COMM_ADCIRC,IERR)
+    MPI_COMM_SIZE(MPI_COMM_ADCIRC,MNALLPROC,IERR) !get num procs
+    MPI_COMM_RANK(MPI_COMM_ADCIRC,MYPROC,IERR)    !get MPI rank
+    ... and a lot more.
+
+  SUBROUTINE MSG_FINI(NO_MPI_FINALIZE)
+    Calls:
+    MPI_SEND(SIG_TERM, ... ) ! if myproc = 0, send sigterm to other procs
+    MPI_FINALIZE(IERR)
+
+  SUBROUTINE MSG_TABLE()
+    (1) Read Message-Passing Information from file "fort.18"
+    (2) Determine resident nodes: RESNODE(I) is true  if I is resident node
+    (3) Determine ghost nodes:    RESNODE(I) is false if I is ghost node
+    (4) Determine number of neighbor subdomains
+    (5) MPI rank of each neighbor and number of ghosts nodes to receive
+    (6) Read Message-Passing Receive List
+    (7) MPI rank of each neighbor and number of ghosts nodes to send
+    (8) Read Message-Passing Send List
+   
+    Arrays generated:
+    READ(18,'(8X,3I12)') NE_G  <- reads in global number of elements
+    DO I=1,MNE
+      READ(18,*) IMAP_EL_LG(I)
+    ENDDO
+    IMAP_EL_LG(I) is a map from local (I) to global elements.
+    NODES_LG(I) is the same map, but for nodes.
+    IMAP_STAE_LG(I) is the same map for elevation station nodes
+    
+    Message-passing tables:
+    IDPROC <- which subdomain
+    NLOCAL <- number of local nodes
+
+    NNODELOC(NLOCAL) <- list of 'resident' nodes
+    IBELONGTO(MNP)   <- set to zero initially...
+    DO I=1,NLOCAL
+      IBELONGTO(NNODELOC(I))
+    
