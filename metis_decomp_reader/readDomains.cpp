@@ -37,27 +37,59 @@ public:
         int numberOfElements;
         int numberOfPoints;
         std::vector<int> ownerID;
-
+        std::vector<neighborTable> myNeighborTables;
         openfort80File(fort80File);
         readfort80(fort80File, &numberOfDomains, &numberOfElements, &numberOfPoints, &ownerID);
-
+        
         for (int i=0; i< numberOfDomains; i++){
+            neighborTable myNeighborTable;
             std::ifstream fort18File;
             int numberOfNeighbors;
-            std::vector<int> neighborList;
             openfort18File(fort18File, i);
-            readfort18(fort18File, &i, &numberOfNeighbors, &neighborList);            
+            readfort18(fort18File, &numberOfNeighbors, &i, &myNeighborTable);            
             std::cerr << "Domain: " << i << " number of neighbors: " << numberOfNeighbors << "\n";
+            myNeighborTables.push_back(myNeighborTable);
+        }
+
+        std::cerr << "myNeighborTables.size() = " << myNeighborTables.size() << "\n";
+        for(int i=0; i<myNeighborTables.size(); i++){
+            std::cerr << "myNeighborTables[" << i << "].myNeighbor.size() = " << myNeighborTables[i].myNeighbor.size() << "\n";
+            for (int j=0; j<myNeighborTables[i].myNeighbor.size(); j++){
+                std::cerr << "myNeighborTables[" << i << "].myNeighbor[" << j << "].neighborID = " 
+                          << myNeighborTables[i].myNeighbor[j].neighborID << "\n";
+                std::cerr << "myNeighborTables[" << i << "].myNeighbor[" << j << "].recvNodes.size() = " 
+                          << myNeighborTables[i].myNeighbor[j].recvNodes.size() << "\n";
+                std::cerr << "myNeighborTables[" << i << "].myNeighbor[" << j << "].sendNodes.size() = " 
+                          << myNeighborTables[i].myNeighbor[j].sendNodes.size() << "\n";
+            }
+            
         }
         
-            
 
     }
-
+    
+    
+    
+    
     
 private:
     std::string meshDir;
+    
+    struct neighbor
+    {
+        int neighborID;
+        std::vector<int> sendNodes;
+        std::vector<int> recvNodes;
+    };
 
+    struct neighborTable 
+    {
+        std::vector<neighbor> myNeighbor;
+    };
+        
+        
+        
+        
     void openfort80File(std::ifstream& meshFile)
     {
         std::string meshFileName = meshDir;
@@ -67,7 +99,7 @@ private:
             throw std::runtime_error("could not open fort.80 file"+meshFileName);
         }    
     }
-
+        
     void readfort80(std::ifstream& meshFile, int *numberOfDomains, int *numberOfElements, int *numberOfPoints, std::vector<int> *ownerID)
     {
         std::string buffer(1024, ' ');
@@ -75,19 +107,19 @@ private:
         std::getline(meshFile, buffer);
         std::getline(meshFile, buffer);
         std::getline(meshFile, buffer);
-
+            
         meshFile >> *numberOfElements;
         meshFile >> *numberOfPoints;
-        
+            
         //Discard rest of line
         std::getline(meshFile, buffer);
-
+            
         meshFile >> *numberOfDomains;
-
+            
         std::cerr << "number of elements: " << *numberOfElements << "\n"
                   << "number of points: " << *numberOfPoints << "\n"
                   << "number of domains: " << *numberOfDomains << "\n";    
-
+            
         //Discard rest of the line:
         std::getline(meshFile, buffer);
 
@@ -160,13 +192,13 @@ private:
     }
 
 
-    void readfort18(std::ifstream& meshFile, int *numberOfNeighbors, const int *domainID, std::vector<int> *neighborList)
+    void readfort18(std::ifstream& meshFile, int *numberOfNeighbors, const int *domainID, neighborTable *myNeighborTable)
     {
         int numberOfElements;
         int numberOfNodes;
         int domainIDFromFile;
         int numberOfResNodes;
-        std::vector<int> residentNodes;
+        std::vector<int> residentNodes;        
 
         std::string buffer(1024, ' ');
         //Discard first line:
@@ -241,17 +273,48 @@ private:
         std::getline(meshFile, buffer); //Discard remainder of the
                                         //line.
 
-        meshFile >> buffer;
-        std::cerr << buffer << "\n";                
-        if (buffer=="COMM") {
-            meshFile >> buffer;
-            meshFile >> *numberOfNeighbors;
-            std::getline(meshFile, buffer);
+        //COMM PE line
+        meshFile >> buffer; //COMM
+        meshFile >> buffer; //PE
+        meshFile >> *numberOfNeighbors;
+        std::getline(meshFile, buffer);//discard rest of the line
+
+        for (int i=0; i<*numberOfNeighbors; i++){
+            neighbor neighbor;
+            int numberOfRecvNodes;
+            meshFile >> buffer; //RECV
+            meshFile >> buffer; //PE
+            meshFile >> neighbor.neighborID;
+            meshFile >> numberOfRecvNodes;
+            std::getline(meshFile, buffer);//discard rest of the line
+
+            //Assemble arrays of nodes to be received
+            for (int j=0; j<numberOfRecvNodes; j++){
+                int receiveNode;
+                meshFile >> receiveNode;   
+                neighbor.recvNodes.push_back(receiveNode);
+            }
+            std::getline(meshFile, buffer);//discard rest of the line
+            myNeighborTable->myNeighbor.push_back(neighbor);
         }
         
-
-//        std::getline(meshFile, buffer);
-//        std::cerr << buffer << "\n";                
+        for (int i=0; i<*numberOfNeighbors; i++){
+            int neighbor;
+            int numberOfSendNodes;
+            meshFile >> buffer; //SEND
+            meshFile >> buffer; //PE
+            meshFile >> neighbor;
+            meshFile >> numberOfSendNodes;
+            std::getline(meshFile, buffer);//discard rest of the line
+            //Assemble arrays of nodes to be sent
+            for (int j=0; j<numberOfSendNodes; j++){
+                int sendNode;
+                meshFile >> sendNode;                
+                myNeighborTable->myNeighbor[i].sendNodes.push_back(sendNode);
+            }
+            std::getline(meshFile, buffer);//discard rest of the line
+        }
+        
     }    
 
 
