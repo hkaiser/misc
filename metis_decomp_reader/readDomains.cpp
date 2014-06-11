@@ -1,3 +1,5 @@
+#include <libgeodecomp.h>
+#include <libgeodecomp/storage/multicontainercell.h>
 #include <iostream>
 #include <fstream>
 #include <stdexcept>
@@ -5,6 +7,8 @@
 #include <string>
 #include <iomanip>
 #include <sstream>
+
+using namespace LibGeoDecomp;
 
 class SimpleDomain
 {
@@ -49,6 +53,18 @@ public:
             readfort18(fort18File, &numberOfNeighbors, &i, &myNeighborTable);            
             std::cerr << "Domain: " << i << " number of neighbors: " << numberOfNeighbors << "\n";
             myNeighborTables.push_back(myNeighborTable);
+
+            //Read fort.14 file for each domain
+            int numberOfPoints;
+            int numberOfElements;
+            std::ifstream fort14File;
+            openfort14File(fort14File, i);
+            readFort14Header(fort14File, &numberOfElements, &numberOfPoints);
+            std::vector<FloatCoord<3> > points;
+            readFort14Points(fort14File, &points, numberOfPoints);            
+            determineCenter(&points);
+            
+            
         }
 
         std::cerr << "myNeighborTables.size() = " << myNeighborTables.size() << "\n";
@@ -86,9 +102,19 @@ private:
     {
         std::vector<neighbor> myNeighbor;
     };
-        
-        
-        
+
+    void determineCenter(std::vector<FloatCoord<3> > *points) 
+    {
+        FloatCoord<2> center;
+        std::cerr << "points->size() = " << points->size() << "\n";
+        for (int i=0; i < points->size(); i++){
+            std::cerr << "points[0][" << i << "] = " << points[0][i] << "\n";
+            std::cerr << "points[1][" << i << "] = " << points[1][i] << "\n";
+            //FloatCoord<2> coord();
+        }
+
+    }
+    
         
     void openfort80File(std::ifstream& meshFile)
     {
@@ -187,7 +213,7 @@ private:
 //        std::cerr << meshFileName << "\n";
         meshFile.open(meshFileName.c_str());
         if (!meshFile) {
-            throw std::runtime_error("could not open fort.80 file"+meshFileName);
+            throw std::runtime_error("could not open fort.18 file"+meshFileName);
         }    
     }
 
@@ -317,6 +343,66 @@ private:
         
     }    
 
+    void openfort14File(std::ifstream& meshFile, int domainID)
+    {
+        std::string meshFileName = meshDir;
+        meshFileName.append("/PE");
+        std::stringstream buf;
+        buf.width(4);
+        buf.fill('0');
+        buf << domainID;
+        meshFileName.append(buf.str());
+        meshFileName.append("/fort.14");
+//        std::cerr << meshFileName << "\n";
+        meshFile.open(meshFileName.c_str());
+        if (!meshFile) {
+            throw std::runtime_error("could not open fort.14 file "+meshFileName);
+        }    
+    }
+
+
+
+    void readFort14Header(std::ifstream& meshFile, int *numberOfElements, int *numberOfPoints)
+    {
+        std::string buffer(1024, ' ');
+        // discard first line, which only holds comments anyway
+        std::getline(meshFile, buffer);
+
+        meshFile >> *numberOfElements;
+        meshFile >> *numberOfPoints;
+
+        // discard remainder of line
+        std::getline(meshFile, buffer);
+
+        std::cerr << "numberOfElements: " << *numberOfElements << "\n"
+                  << "numberOfPoints: " << *numberOfPoints << "\n";
+
+        if (!meshFile.good()) {
+            throw std::logic_error("could not read header");
+        }
+    }
+
+    void readFort14Points(std::ifstream& meshFile, std::vector<FloatCoord<3> > *points, const int numberOfPoints)
+    {
+        std::string buffer(1024, ' ');
+
+        for (int i = 0; i < numberOfPoints; ++i) {
+            FloatCoord<3> p;
+            int buf;
+
+            meshFile >> buf;
+            meshFile >> p[0];
+            meshFile >> p[1];
+            meshFile >> p[2];
+            std::getline(meshFile, buffer);
+
+            *points << p;
+        }
+
+        if (!meshFile.good()) {
+            throw std::runtime_error("could not read points");
+        }
+    }
 
 
 };
