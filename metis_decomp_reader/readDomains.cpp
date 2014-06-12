@@ -36,6 +36,8 @@ public:
     virtual void grid()
     {
         std::ifstream fort80File;
+
+        double maxDiameter;
         
         int numberOfDomains;
         int numberOfElements;
@@ -45,13 +47,15 @@ public:
         openfort80File(fort80File);
         readfort80(fort80File, &numberOfDomains, &numberOfElements, &numberOfPoints, &ownerID);
         
+        std::vector<FloatCoord<2> > centers;
+
         for (int i=0; i< numberOfDomains; i++){
             neighborTable myNeighborTable;
             std::ifstream fort18File;
             int numberOfNeighbors;
             openfort18File(fort18File, i);
             readfort18(fort18File, &numberOfNeighbors, &i, &myNeighborTable);            
-            std::cerr << "Domain: " << i << " number of neighbors: " << numberOfNeighbors << "\n";
+//            std::cerr << "Domain: " << i << " number of neighbors: " << numberOfNeighbors << "\n";
             myNeighborTables.push_back(myNeighborTable);
 
             //Read fort.14 file for each domain
@@ -62,11 +66,17 @@ public:
             readFort14Header(fort14File, &numberOfElements, &numberOfPoints);
             std::vector<FloatCoord<3> > points;
             readFort14Points(fort14File, &points, numberOfPoints);            
-            determineCenter(&points);
+            FloatCoord<2> center = determineCenter(&points);
+            center /= numberOfPoints;
             
-            
+            centers.push_back(center);
         }
+        
 
+        std::cerr << centers << "\n";
+
+        maxDiameter = determineMaximumDiameter(&centers, &myNeighborTables);
+        
         std::cerr << "myNeighborTables.size() = " << myNeighborTables.size() << "\n";
         for(int i=0; i<myNeighborTables.size(); i++){
             std::cerr << "myNeighborTables[" << i << "].myNeighbor.size() = " << myNeighborTables[i].myNeighbor.size() << "\n";
@@ -103,18 +113,44 @@ private:
         std::vector<neighbor> myNeighbor;
     };
 
-    void determineCenter(std::vector<FloatCoord<3> > *points) 
+    FloatCoord<2> determineCenter(std::vector<FloatCoord<3> > *points) 
     {
         FloatCoord<2> center;
-        std::cerr << "points->size() = " << points->size() << "\n";
+//        std::cerr << "points->size() = " << points->size() << "\n";
         for (int i=0; i < points->size(); i++){
-            std::cerr << "points[0][" << i << "] = " << points[0][i] << "\n";
-            std::cerr << "points[1][" << i << "] = " << points[1][i] << "\n";
-            //FloatCoord<2> coord();
+//            std::cerr << "points[0][" << i << "][0] = " << points[0][i][0] << "\n";
+//            std::cerr << "points[1][" << i << "] = " << points[1][i] << "\n";
+//            std::cerr << "points[" << i << "][0] = " << points[i][0] << "\n";
+//            std::cerr << "points[" << i << "][1] = " << points[i][1] << "\n";
+            FloatCoord<2> coord(points[0][i][0],points[0][i][1]);
+            center += coord;
         }
-
+        return center;
     }
     
+    double determineMaximumDiameter(
+        const std::vector<FloatCoord<3> > points,
+        const std::vector<neighborTable> neighborTables)
+    {
+        double maxDiameter = 0;
+
+        int numPoints = points.size();
+        std::cerr << "numPoints = " << numPoints << "\n";
+        for (int point = 0; point < 1; ++point) {
+            //int numNeighbors = neighbor;
+            FloatCoord<2> minPoint(
+                std::numeric_limits<double>::max(),
+                std::numeric_limits<double>::max());
+            FloatCoord<2> maxPoint(
+                -std::numeric_limits<double>::max(),
+                -std::numeric_limits<double>::max());
+
+            //maxDiameter = std::max(maxDiameter, diameter);
+        }
+        
+        return maxDiameter;
+    }
+
         
     void openfort80File(std::ifstream& meshFile)
     {
@@ -142,9 +178,9 @@ private:
             
         meshFile >> *numberOfDomains;
             
-        std::cerr << "number of elements: " << *numberOfElements << "\n"
-                  << "number of points: " << *numberOfPoints << "\n"
-                  << "number of domains: " << *numberOfDomains << "\n";    
+//        std::cerr << "number of elements: " << *numberOfElements << "\n"
+//                  << "number of points: " << *numberOfPoints << "\n"
+//                  << "number of domains: " << *numberOfDomains << "\n";    
             
         //Discard rest of the line:
         std::getline(meshFile, buffer);
@@ -374,8 +410,8 @@ private:
         // discard remainder of line
         std::getline(meshFile, buffer);
 
-        std::cerr << "numberOfElements: " << *numberOfElements << "\n"
-                  << "numberOfPoints: " << *numberOfPoints << "\n";
+//        std::cerr << "numberOfElements: " << *numberOfElements << "\n"
+//                  << "numberOfPoints: " << *numberOfPoints << "\n";
 
         if (!meshFile.good()) {
             throw std::logic_error("could not read header");
