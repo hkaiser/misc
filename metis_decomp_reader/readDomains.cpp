@@ -7,6 +7,7 @@
 #include <string>
 #include <iomanip>
 #include <sstream>
+#include <math.h>
 
 using namespace LibGeoDecomp;
 
@@ -70,28 +71,13 @@ public:
             center /= numberOfPoints;
             
             centers.push_back(center);
-        }
+        }        
         
-
+        std::cerr << "centers: ";
         std::cerr << centers << "\n";
 
-        maxDiameter = determineMaximumDiameter(&centers, &myNeighborTables);
-        
-        std::cerr << "myNeighborTables.size() = " << myNeighborTables.size() << "\n";
-        for(int i=0; i<myNeighborTables.size(); i++){
-            std::cerr << "myNeighborTables[" << i << "].myNeighbor.size() = " << myNeighborTables[i].myNeighbor.size() << "\n";
-            for (int j=0; j<myNeighborTables[i].myNeighbor.size(); j++){
-                std::cerr << "myNeighborTables[" << i << "].myNeighbor[" << j << "].neighborID = " 
-                          << myNeighborTables[i].myNeighbor[j].neighborID << "\n";
-                std::cerr << "myNeighborTables[" << i << "].myNeighbor[" << j << "].recvNodes.size() = " 
-                          << myNeighborTables[i].myNeighbor[j].recvNodes.size() << "\n";
-                std::cerr << "myNeighborTables[" << i << "].myNeighbor[" << j << "].sendNodes.size() = " 
-                          << myNeighborTables[i].myNeighbor[j].sendNodes.size() << "\n";
-            }
-            
-        }
-        
-
+        maxDiameter = determineMaximumDiameter(&centers, myNeighborTables);
+        std::cerr << "max diameter = " << maxDiameter << "\n";
     }
     
     
@@ -110,7 +96,7 @@ private:
 
     struct neighborTable 
     {
-        std::vector<neighbor> myNeighbor;
+        std::vector<neighbor> myNeighbors;
     };
 
     FloatCoord<2> determineCenter(std::vector<FloatCoord<3> > *points) 
@@ -129,28 +115,33 @@ private:
     }
     
     double determineMaximumDiameter(
-        const std::vector<FloatCoord<3> > points,
-        const std::vector<neighborTable> neighborTables)
+        const std::vector<FloatCoord<2> >* points,
+        const std::vector<neighborTable> myNeighborTables)
     {
         double maxDiameter = 0;
 
-        int numPoints = points.size();
+        int numPoints = points->size();
         std::cerr << "numPoints = " << numPoints << "\n";
-        for (int point = 0; point < 1; ++point) {
-            //int numNeighbors = neighbor;
-            FloatCoord<2> minPoint(
-                std::numeric_limits<double>::max(),
-                std::numeric_limits<double>::max());
-            FloatCoord<2> maxPoint(
-                -std::numeric_limits<double>::max(),
-                -std::numeric_limits<double>::max());
-
-            //maxDiameter = std::max(maxDiameter, diameter);
+        for (int point = 0; point < numPoints; ++point) {
+            int numNeighbors = myNeighborTables[point].myNeighbors.size();
+            std::cerr << "domain: " <<point << " numNeighbors = " << numNeighbors << "\n";            
+            for (int i=0; i<numNeighbors; i++){
+                int neighborID = myNeighborTables[point].myNeighbors[i].neighborID;
+                double dist = getDistance(points[0][point],points[0][neighborID]);
+                std::cerr << "neighborID = " << neighborID << " distance = " << dist << "\n";
+                maxDiameter = std::max(maxDiameter,dist);
+            }
         }
         
         return maxDiameter;
     }
 
+    double getDistance(FloatCoord<2> a, FloatCoord<2> b)
+    {
+        FloatCoord<2> c = a-b;
+        return sqrt(c[0]*c[0]+c[1]*c[1]);
+    }
+    
         
     void openfort80File(std::ifstream& meshFile)
     {
@@ -357,7 +348,7 @@ private:
                 neighbor.recvNodes.push_back(receiveNode);
             }
             std::getline(meshFile, buffer);//discard rest of the line
-            myNeighborTable->myNeighbor.push_back(neighbor);
+            myNeighborTable->myNeighbors.push_back(neighbor);
         }
         
         for (int i=0; i<*numberOfNeighbors; i++){
@@ -372,7 +363,7 @@ private:
             for (int j=0; j<numberOfSendNodes; j++){
                 int sendNode;
                 meshFile >> sendNode;                
-                myNeighborTable->myNeighbor[i].sendNodes.push_back(sendNode);
+                myNeighborTable->myNeighbors[i].sendNodes.push_back(sendNode);
             }
             std::getline(meshFile, buffer);//discard rest of the line
         }
