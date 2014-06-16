@@ -11,27 +11,106 @@
 
 using namespace LibGeoDecomp;
 
-class SimpleDomain
+const std::size_t MAX_NEIGHBORS = 40;
+
+// TODO: put signature of the external FORTRAN kernel
+
+FloatCoord<2> origin;
+FloatCoord<2> quadrantDim;
+
+// Each instance represents one subdomain of an ADCIRC unstructured grid
+class DomainCell
 {
 public:
+    class API: 
+        public::APITraits::HasCustomRegularGrid,
+        public::APITraits::HasUnstructuredGrid,
+        public::APITraits::HasPointMesh
+    {
+    public:
+        inline FloatCoord<2> getRegularGridSpacing()
+        {
+            return quadrantDim;
+        }
+        
+        inline FloatCoord<2> getRegularGridOrigin()
+        {
+            return origin;
+        }
+    };
 
-    SimpleDomain(const int id = 0, const int np = 0) :
-        id(id),
-        np(np)
+    DomainCell(const LibGeoDecomp::FloatCoord<2>& center = FloatCoord<2>(), int id = 0) :
+        center(center),
+        id(id)
     {}
-    
+
+    template<typename NEIGHBORHOOD>
+    void update(const NEIGHBORHOOD& hood, int nanoStep);
+
+    void pushNeighborNode(const int neighborID)
+    {
+        if (std::count(neighboringNodes.begin(), neighboringNodes.end(), neighborID) == 0) {
+            neighboringNodes << neighborID;
+        }
+    }
+
+    const LibGeoDecomp::FloatCoord<2>& getPoint() const
+    {
+        return center;
+    }
+
+    // fixme: I don't like that I have to specify this despite not needing it
+    std::vector<LibGeoDecomp::FloatCoord<2> > getShape() const
+    {
+        std::vector<LibGeoDecomp::FloatCoord<2> > ret;
+        ret << center + FloatCoord<2>( 0.000, -0.001);
+        ret << center + FloatCoord<2>(-0.001,  0.000);
+        ret << center + FloatCoord<2>( 0.000,  0.001);
+        ret << center + FloatCoord<2>( 0.001,  0.000);
+
+        return ret;
+    }
+
+    LibGeoDecomp::FloatCoord<2> center;
     int id;
-    int np;
+    FixedArray<int, MAX_NEIGHBORS> neighboringNodes;
+
 };
 
+// ContainerCell translates between the unstructured grid and the
+// regular grid currently required by LGD
+typedef ContainerCell<DomainCell, 1000> ContainerCellType;
+
+// type definition required for callback functions below
+typedef LibGeoDecomp::TopologiesHelpers::Topology<2, false, false, false > TopologyType;
+typedef LibGeoDecomp::Grid<ContainerCellType, TopologyType> GridType;
+typedef LibGeoDecomp::CoordMap<ContainerCellType, GridType> BaseNeighborhood;
+const LibGeoDecomp::NeighborhoodAdapter<BaseNeighborhood, int, DomainCell, 2> Neighborhood;
+
+
+const Neighborhood *neighborhood;
+DomainCell *domainCell;
+
+template<typename NEIGHBORHOOD>
+void DomainCell::update(const NEIGHBORHOOD& hood, int nanoStep)
+{
+    // init callback, by which the Fortran code can retrieve data
+    domainCell = this;
+    neighborhood = &hood;
+    int numNodeNeighbors = neighboringNodes.size();
+
+    //update_node_(&id, &temperature, &neighboringNodes[0], &numNodeNeighbors);
+}
 
 class ADCIRCInitializer
 {
 public:
-    ADCIRCInitializer(const std::string& meshDir) :
+    ADCIRCInitializer(const std::string& meshDir, const int steps) :
+//        SimpleInitializer<SimpleContainer>(Coord<2>
         meshDir(meshDir)
     {
-        grid();
+//        grid();
+        determineGridDimensions();
     }
     
     virtual void grid()
@@ -45,12 +124,26 @@ public:
         int numberOfPoints;
         std::vector<int> ownerID;
         std::vector<neighborTable> myNeighborTables;
+        
         openfort80File(fort80File);
         readfort80(fort80File, &numberOfDomains, &numberOfElements, &numberOfPoints, &ownerID);
-        
+
+
+        std::vector<std::vector<int> > neighboringDomains;        
         std::vector<FloatCoord<2> > centers;
 
-        for (int i=0; i< numberOfDomains; i++){
+
+        //***** Uncomment when turning on LGD *************
+        // clear grid:
+        CoordBox<2> box = grid->boundingBox();
+        for (CoordBox<2>::Iterator i = box.begin(); i != box.end(); ++i) {
+            grid->set(*i, SimpleContainer());
+        }
+        //*************************************************
+
+
+        // piece together domain node cells:
+        for (int i=0; i< numberOfDomains; i++){            
             neighborTable myNeighborTable;
             std::ifstream fort18File;
             int numberOfNeighbors;
@@ -71,13 +164,30 @@ public:
             center /= numberOfPoints;
             
             centers.push_back(center);
-        }        
-        
-        std::cerr << "centers: ";
-        std::cerr << centers << "\n";
 
-        maxDiameter = determineMaximumDiameter(&centers, myNeighborTables);
-        std::cerr << "max diameter = " << maxDiameter << "\n";
+            // Load neighboringDomains with myNeighborTables
+            std::vector<int> neighbors;
+            for (int i=0; i<numberOfNeighbors; i++){
+                neighbors.push_back(myNeighborTable.myNeighbors[i].neighborID);
+            }
+            // I'm not sure if I need to do this.
+            neighboringDomains.push_back(neighbors);
+
+
+            DomainCell node(center, i, 0);
+            
+            for (j=0; j<numberOfNeighbors; j++)
+            {
+                node.pushNeighborNode(neighbors[j]);
+            }
+            
+            FloatCoord<2> gridCoordFloat = (node.center - minCoord) / quadrantDim;
+            Coord<2> gridCoord(gridCoordFloat[0], gridCoordFloat[1]);
+
+            ContainerCellType container = grid->get(gridCoord);
+            container.insert(cell.id, cell);
+            grid->set(gridCoord, container);            
+        }        
     }
     
     
@@ -86,7 +196,14 @@ public:
     
 private:
     std::string meshDir;
+    double maxDiameter;
+    FloatCoord<2> minCoord;
+    FloatCoord<2> maxCoord;
     
+    //Shouldn't need these after incorporating LGD:
+//    Coord<2> dimensions;
+    
+
     struct neighbor
     {
         int neighborID;
@@ -98,6 +215,76 @@ private:
     {
         std::vector<neighbor> myNeighbors;
     };
+
+    void determineGridDimensions()
+    {
+        std::ifstream fort80File;
+        
+        int numberOfDomains;
+        int numberOfElements;
+        int numberOfPoints;
+        std::vector<int> ownerID;
+        std::vector<neighborTable> myNeighborTables;
+        openfort80File(fort80File);
+        readfort80(fort80File, &numberOfDomains, &numberOfElements, &numberOfPoints, &ownerID);
+        
+        std::vector<FloatCoord<2> > centers;
+
+        for (int i=0; i< numberOfDomains; i++){
+            neighborTable myNeighborTable;
+            std::ifstream fort18File;
+            int numberOfNeighbors;
+            openfort18File(fort18File, i);
+            readfort18(fort18File, &numberOfNeighbors, &i, &myNeighborTable);            
+            myNeighborTables.push_back(myNeighborTable);
+
+            //Read fort.14 file for each domain
+            int numberOfPoints;
+            int numberOfElements;
+            std::ifstream fort14File;
+            openfort14File(fort14File, i);
+            readFort14Header(fort14File, &numberOfElements, &numberOfPoints);
+            std::vector<FloatCoord<3> > points;
+            readFort14Points(fort14File, &points, numberOfPoints);            
+            FloatCoord<2> center = determineCenter(&points);
+            center /= numberOfPoints;
+            
+            centers.push_back(center);
+        }        
+
+        maxDiameter = determineMaximumDiameter(&centers, myNeighborTables);
+        minCoord = FloatCoord<2>(
+            std::numeric_limits<double>::max(),
+            std::numeric_limits<double>::max());
+        maxCoord = FloatCoord<2>(
+            -std::numeric_limits<double>::max(),
+            -std::numeric_limits<double>::max());
+
+        for (int i = 0; i < numberOfDomains; ++i) {
+            FloatCoord<2> p(centers[i][0], centers[i][1]);
+
+            minCoord = minCoord.min(p);
+            maxCoord = maxCoord.max(p);
+        }
+
+        origin = minCoord;
+        // add a safety factor for the cell spacing so we can be sure
+        // neighboring elements are never more than 1 cell apart in the grid:
+        quadrantDim = FloatCoord<2>(maxDiameter * 2.0, maxDiameter * 2.0);
+        FloatCoord<2> floatDimensions = (maxCoord - minCoord) / quadrantDim;
+        dimensions = Coord<2>(
+            ceil(floatDimensions[0]),
+            ceil(floatDimensions[1]));
+
+        
+        std::cout << "geometry summary:\n"
+                  << "  minCoord: "    << minCoord    << "\n"
+                  << "  maxCoord: "    << maxCoord    << "\n"
+                  << "  maxDiameter: " << maxDiameter << "\n"
+                  << "  dimensions: "  << dimensions  << "\n"
+                  << "\n";
+    }
+    
 
     FloatCoord<2> determineCenter(std::vector<FloatCoord<3> > *points) 
     {
@@ -121,14 +308,14 @@ private:
         double maxDiameter = 0;
 
         int numPoints = points->size();
-        std::cerr << "numPoints = " << numPoints << "\n";
+//        std::cerr << "numPoints = " << numPoints << "\n";
         for (int point = 0; point < numPoints; ++point) {
             int numNeighbors = myNeighborTables[point].myNeighbors.size();
-            std::cerr << "domain: " <<point << " numNeighbors = " << numNeighbors << "\n";            
+//            std::cerr << "domain: " <<point << " numNeighbors = " << numNeighbors << "\n";            
             for (int i=0; i<numNeighbors; i++){
                 int neighborID = myNeighborTables[point].myNeighbors[i].neighborID;
                 double dist = getDistance(points[0][point],points[0][neighborID]);
-                std::cerr << "neighborID = " << neighborID << " distance = " << dist << "\n";
+//                std::cerr << "neighborID = " << neighborID << " distance = " << dist << "\n";
                 maxDiameter = std::max(maxDiameter,dist);
             }
         }
@@ -437,5 +624,5 @@ private:
     
 int main(int argc, char* argv[])
 {
-    ADCIRCInitializer("/home/zbyerly/misc/parallel_qah");
+    ADCIRCInitializer("/home/zbyerly/misc/parallel_qah",1);
 }
