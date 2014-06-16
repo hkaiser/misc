@@ -13,7 +13,7 @@ using namespace LibGeoDecomp;
 
 const std::size_t MAX_NEIGHBORS = 40;
 
-// TODO: put signature of the external FORTRAN kernel
+extern "C" void update_node_(int *id, int *wetdry, int *neighboring_node_ids, int *num_node_neighbors);
 
 FloatCoord<2> origin;
 FloatCoord<2> quadrantDim;
@@ -39,9 +39,10 @@ public:
         }
     };
 
-    DomainCell(const LibGeoDecomp::FloatCoord<2>& center = FloatCoord<2>(), int id = 0) :
+    DomainCell(const LibGeoDecomp::FloatCoord<2>& center = FloatCoord<2>(), int id = 0, const int wetdry = 0) :
         center(center),
-        id(id)
+        id(id),
+        wetdry(wetdry)
     {}
 
     template<typename NEIGHBORHOOD>
@@ -73,6 +74,7 @@ public:
 
     LibGeoDecomp::FloatCoord<2> center;
     int id;
+    int wetdry;
     FixedArray<int, MAX_NEIGHBORS> neighboringNodes;
 
 };
@@ -99,25 +101,22 @@ void DomainCell::update(const NEIGHBORHOOD& hood, int nanoStep)
     neighborhood = &hood;
     int numNodeNeighbors = neighboringNodes.size();
 
-    //update_node_(&id, &temperature, &neighboringNodes[0], &numNodeNeighbors);
+    update_node_(&id, &wetdry, &neighboringNodes[0], &numNodeNeighbors);
 }
 
 class ADCIRCInitializer
 {
 public:
     ADCIRCInitializer(const std::string& meshDir, const int steps) :
-//        SimpleInitializer<SimpleContainer>(Coord<2>
+        SimpleInitializer<ContainerCellType>(Coord<2>(), steps),
         meshDir(meshDir)
     {
-//        grid();
         determineGridDimensions();
     }
     
-    virtual void grid()
+    virtual void grid(GridType *grid)
     {
         std::ifstream fort80File;
-
-        double maxDiameter;
         
         int numberOfDomains;
         int numberOfElements;
@@ -133,13 +132,11 @@ public:
         std::vector<FloatCoord<2> > centers;
 
 
-        //***** Uncomment when turning on LGD *************
         // clear grid:
         CoordBox<2> box = grid->boundingBox();
         for (CoordBox<2>::Iterator i = box.begin(); i != box.end(); ++i) {
             grid->set(*i, SimpleContainer());
         }
-        //*************************************************
 
 
         // piece together domain node cells:
@@ -200,10 +197,6 @@ private:
     FloatCoord<2> minCoord;
     FloatCoord<2> maxCoord;
     
-    //Shouldn't need these after incorporating LGD:
-//    Coord<2> dimensions;
-    
-
     struct neighbor
     {
         int neighborID;
@@ -621,8 +614,46 @@ private:
 
 };
 
-    
+
+// Used previously for testing
+/*    
 int main(int argc, char* argv[])
 {
     ADCIRCInitializer("/home/zbyerly/misc/parallel_qah",1);
+}
+*/
+
+extern "C" void get_wetdry_(int *buf, int *id)
+{
+    *buf = (*neighborhood)[*id].wetdry;
+}
+
+extern "C" void simulate_(char *dirname, int *steps, int *ioPeriod)
+{
+    std::string prunedDirname(dirname);
+    for (int i = prunedDirname.length() - 1; i >= 0; --i) {
+        if (prunedDirname[i] == ' ') {
+            prunedDirname[i] = 0;
+        } else {
+            break;
+        }
+    }
+    
+    std::cout << "mesh dir: »" << prunedDirname << "«\n";
+    Coord<2> dim(3, 2);
+    std::size_t numCells = 100;
+    double minDistance = 100;
+    double quadrantSize = 400;
+    quadrantDim = FloatCoord<2>(quadrantSize, quadrantSize);
+
+    SerialSimulator<ContainerCellType> sim(
+        new ADCIRCInitializer(prunedDirname, *steps));
+    
+    SiloWriter<ContainerCellType> *writer = new SiloWriter<ContainerCellType>("mesh", *ioPeriod);
+    writer->addSelectorForUnstructuredGrid(
+        &DomainCell::wetdry,
+        "DomainCell wetdry");
+    sim.addWriter(writer);
+    
+    sim.run();
 }
