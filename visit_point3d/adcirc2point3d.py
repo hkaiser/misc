@@ -33,7 +33,7 @@ for line in infile:
     value = 0.0
 
 #    print x, y, depth
-    f.write("%g %g %g %g\n" % (x,y,depth,value))
+    f.write("%g %g %g %g\n" % (x,y,value,depth))
 
 
     if nodeID == np:
