@@ -1,0 +1,12 @@
+      SUBROUTINE AVGDEPTH(N, DEPTH, AVG)
+      IMPLICIT NONE
+      INT, INTENT(IN) :: N 
+      REAL, DIMENSION(N) :: DEPTH
+      REAL, INTENT(OUT) :: AVG
+      
+      AVG = 0.0
+      DO I=1,N
+         AVG = AVG + DEPTH(I)
+      END DO
+      
+      END SUBROUTINE

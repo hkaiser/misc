@@ -1,0 +1,4 @@
+OBJECTS = avgdepth.o main.o
+
+main: ${OBJECTS}
+	g++ -O ${OBJECTS} -o main

@@ -1,0 +1,12 @@
+#include <stdio.h>
+
+#define MAX 100
+
+extern "C"{
+  void avgdepth_(int *numnodes, float depth[]);
+}
+
+int main()
+{
+  int numnodes = 30;
+  float depth[MAX]
