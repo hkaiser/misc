@@ -1,0 +1,15 @@
+#!/usr/bin/ruby
+require 'stringio'
+require 'logger'
+require 'pp'
+
+load '/home/zbyerly/research/fauxtran/fortran_parser.rb'
+
+if ARGV.size != 1
+  STDERR.puts "Usage: #$0 INFILE"
+  exit 1
+end
+
+tree = parser.parse_file(ARGV[0])
+
+puts tree.to_cpp
