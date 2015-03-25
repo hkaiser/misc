@@ -51,12 +51,11 @@ int hpx_main(
 	 )
 {
 
-  int n=10;
-  int timesteps = 10;
+  hpx::future<int> sum1 = hpx::async<kernel_action>(hpx::find_here(), 10);
+  hpx::future<int> sum2 = hpx::async<kernel_action>(hpx::find_here(), 12);
 
-  int sum = hpx::async<kernel_action>(hpx::find_here(), n).get();
-
-  std::cout << "timesteps = " << timesteps << std::endl;
+  std::cout << "sum1 = " << sum1.get() << std::endl;
+  std::cout << "sum2 = " << sum2.get() << std::endl;
 
   /*
   variables_.n = n;
@@ -96,9 +95,7 @@ int main(
 	 )
 {
   // Initialize and run HPX
-  hpx::start(argc, argv);
-
-  hpx::stop;
+  hpx::init();
  
   return 0;
 }
