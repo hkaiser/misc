@@ -1,12 +1,22 @@
 #include <iostream>
 
+#include <hpx/hpx.hpp>
+#include <hpx/hpx_init.hpp>
+#include <hpx/include/actions.hpp>
+#include <hpx/include/components.hpp>
+#include <hpx/include/async.hpp>
+#include <hpx/include/util.hpp>
+
+/*
 #define N_MAX 20
 #define MAX_NEIGHBORS 20
+*/
 
 extern"C" {
   void kernel_();
 }
 
+/*
 extern"C" {
   extern struct{
     int n;
@@ -15,11 +25,38 @@ extern"C" {
     int neighbors[MAX_NEIGHBORS][N_MAX];    
   } variables_;
 }
+*/
 
-int main() {
+//Stripped down version of the common block
+extern"C" {
+  extern struct{
+    int n;
+  } variables_;
+}
+
+
+HPX_PLAIN_ACTION(kernel, kernel_action)
+
+int kernel(int n)
+{
+  variables_.n = n;
+  kernel_();
+}
+
+int hpx_main(
+	 int argc
+	 , char** argv
+	 )
+{
 
   int n=10;
+  int timesteps = 10;
 
+  int sum = hpx::async<kernel_action>(hpx::find_here(), n).get();
+
+  std::cout << "timesteps = " << timesteps << std::endl;
+
+  /*
   variables_.n = n;
   // Creating Neighbor Connectivity
   for (int i=0; i<n; i++) {
@@ -46,6 +83,18 @@ int main() {
       std::cout << "i=" << i << " alive =" << variables_.alive[i] << "\n";
     }
   }
+ 
+  */
+  return hpx::finalize();
+}
 
-  return 0;
+int main(
+	 int argc
+	 , char* argv[]
+	 )
+{
+  // Initialize and run HPX
+  hpx::start(argc, argv);
+
+  return hpx::stop;
 }
