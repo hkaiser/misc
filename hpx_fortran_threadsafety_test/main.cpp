@@ -1,6 +1,7 @@
 #include <iostream>
 
 #include <hpx/hpx.hpp>
+#include <hpx/hpx_start.hpp>
 #include <hpx/hpx_init.hpp>
 #include <hpx/include/actions.hpp>
 #include <hpx/include/components.hpp>
@@ -34,14 +35,15 @@ extern"C" {
   } variables_;
 }
 
-
-HPX_PLAIN_ACTION(kernel, kernel_action)
-
 int kernel(int n)
 {
   variables_.n = n;
   kernel_();
 }
+
+
+HPX_PLAIN_ACTION(kernel, kernel_action)
+
 
 int hpx_main(
 	 int argc
@@ -96,5 +98,7 @@ int main(
   // Initialize and run HPX
   hpx::start(argc, argv);
 
-  return hpx::stop;
+  hpx::stop;
+ 
+  return 0;
 }
