@@ -39,6 +39,7 @@ double kernel(double n)
 {
   variables_.n = n;
   kernel_();
+  return variables_.n;
 }
 
 
@@ -51,11 +52,15 @@ int hpx_main(
 	 )
 {
 
-  hpx::future<double> sum1 = hpx::async<kernel_action>(hpx::find_here(), 303240.0);
-  hpx::future<double> sum2 = hpx::async<kernel_action>(hpx::find_here(), 20480.0);
+  hpx::future<double> sum1 = hpx::async<kernel_action>(hpx::find_here(), 30.2340);
+  hpx::future<double> sum2 = hpx::async<kernel_action>(hpx::find_here(), 2.04800);
+  hpx::future<double> sum3 = hpx::async<kernel_action>(hpx::find_here(), 51.1130);
+  hpx::future<double> sum4 = hpx::async<kernel_action>(hpx::find_here(), 8.26520);
 
   std::cout << "sum1 = " << sum1.get() << std::endl;
   std::cout << "sum2 = " << sum2.get() << std::endl;
+  std::cout << "sum3 = " << sum3.get() << std::endl;
+  std::cout << "sum4 = " << sum4.get() << std::endl;
 
   /*
   variables_.n = n;
@@ -95,7 +100,7 @@ int main(
 	 )
 {
   // Initialize and run HPX
-  hpx::init();
+  hpx::init(argc,argv);
  
   return 0;
 }
