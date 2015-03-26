@@ -31,11 +31,11 @@ extern"C" {
 //Stripped down version of the common block
 extern"C" {
   extern struct{
-    int n;
+    double n;
   } variables_;
 }
 
-int kernel(int n)
+double kernel(double n)
 {
   variables_.n = n;
   kernel_();
@@ -51,8 +51,8 @@ int hpx_main(
 	 )
 {
 
-  hpx::future<int> sum1 = hpx::async<kernel_action>(hpx::find_here(), 10);
-  hpx::future<int> sum2 = hpx::async<kernel_action>(hpx::find_here(), 12);
+  hpx::future<double> sum1 = hpx::async<kernel_action>(hpx::find_here(), 303240.0);
+  hpx::future<double> sum2 = hpx::async<kernel_action>(hpx::find_here(), 20480.0);
 
   std::cout << "sum1 = " << sum1.get() << std::endl;
   std::cout << "sum2 = " << sum2.get() << std::endl;
