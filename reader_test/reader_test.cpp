@@ -1,4 +1,6 @@
+#include "prep_DG.h"
 #include "fort80reader.h"
+#include "fort14reader.h"
 #include <iostream>
 #include <fstream>
 #include <vector>
@@ -22,5 +24,24 @@ int main(int argc, char *argv[])
   std::cout << "Number of domains:" << numberOfDomains << std::endl;
   std::cout << "Number of elements:" << numberOfElements << std::endl;
   std::cout << "Number of points:" << numberOfPoints << std::endl;
+
+
+  // Read domain specific input files (DG.18, fort.14, fort.15, fort.18, fort.dg)
+  for (i=0; i<numberOfDomains; i++) {
+
+    //Generate filename for fort.14 for this domain
+    domainID=i;
+    std::string fort14filename = meshDir;
+    fort14filename.append("/PE");
+    std::stringstream buf;
+    buf.width(4);
+    buf.fill('0');
+    buf << domainID;
+    fort14filename.append(buf.str());
+    fort14filename.append("/fort.14");
+    
+    std::ifstream fort14file;
+    openfort14File(fort14filename, fort14file);
+  }
 
 }

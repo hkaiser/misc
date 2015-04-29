@@ -30,20 +30,19 @@ void readfort80(std::ifstream& fort80file, int *numberOfDomains, int *numberOfEl
   std::getline(fort80file, buffer);
   
   fort80file >> *numberOfDomains;
-  /*
+  
   //Discard rest of the line:
   std::getline(fort80file, buffer);
   
   //Discard next 8 lines:
-  std::getline(fort80file, buffer);
-  std::getline(fort80file, buffer);
-  std::getline(fort80file, buffer);
-  std::getline(fort80file, buffer);
-  std::getline(fort80file, buffer);
-  std::getline(fort80file, buffer);
-  std::getline(fort80file, buffer);
-  std::getline(fort80file, buffer);
+  std::getline(fort80file, buffer); //max nodes on any..
+  std::getline(fort80file, buffer); // 398
+  std::getline(fort80file, buffer); // NSTAE
+  std::getline(fort80file, buffer); // NSTAV
+  std::getline(fort80file, buffer); // MNHARF
+  std::getline(fort80file, buffer); // NWLON, NWLAT
 
+  // read domains but don't save the data
   for (int domain = 0; domain < *numberOfDomains; ++domain) {
     int buf;
     int numNodes;
@@ -65,6 +64,9 @@ void readfort80(std::ifstream& fort80file, int *numberOfDomains, int *numberOfEl
   }
   // Throw away another line
   std::getline(fort80file, buffer);
+
+  /*
+
   for (int node = 0; node < *numberOfPoints; node++) {
     //    ownerTableEntry thisOwnerTableEntry;
     int global_label;
@@ -81,6 +83,7 @@ void readfort80(std::ifstream& fort80file, int *numberOfDomains, int *numberOfEl
     std::getline(fort80file, buffer);//discard rest of line
     
     //    ownerTable->push_back(thisOwnerTableEntry);
-    */
-  }            
+    
+  } 
+  */
 }    
