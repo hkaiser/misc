@@ -5,14 +5,12 @@
 #include <stdexcept>
 
 // Opens the fort.80 file for reading
-std::ifstream& openfort80File(std::string fort80filename)
+void openfort80File(std::string fort80filename, std::ifstream& fort80file)
 {
-  std::ifstream fort80file;
   fort80file.open(fort80filename.c_str());
   if (!fort80file) {
     throw std::runtime_error("could not open fort.80 file "+fort80filename);
   }
-  return fort80file;
 }
 
 // Reads data from the fort.80 file
@@ -32,7 +30,7 @@ void readfort80(std::ifstream& fort80file, int *numberOfDomains, int *numberOfEl
   std::getline(fort80file, buffer);
   
   fort80file >> *numberOfDomains;
-  
+  /*
   //Discard rest of the line:
   std::getline(fort80file, buffer);
   
@@ -83,5 +81,6 @@ void readfort80(std::ifstream& fort80file, int *numberOfDomains, int *numberOfEl
     std::getline(fort80file, buffer);//discard rest of line
     
     //    ownerTable->push_back(thisOwnerTableEntry);
+    */
   }            
 }    
