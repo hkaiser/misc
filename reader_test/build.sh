@@ -1,0 +1,1 @@
+g++ -o reader_test fort80reader.cpp reader_test.cpp

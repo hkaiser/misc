@@ -1,0 +1,84 @@
+#include "fort80reader.h"
+#include <iostream>
+#include <fstream>
+#include <vector>
+
+void openfort80File(std::ifstream& meshFile)
+{
+  std::string meshFileName = meshDir;
+  meshFileName.append("/fort.80");
+  meshFile.open(meshFileName.c_str());
+  if (!meshFile) {
+    throw std::runtime_error("could not open fort.80 file "+meshFileName);
+  }         
+}
+
+void readfort80(std::ifstream& meshFile, int *numberOfDomains, int *numberOfElements, int *numberOfPoints)
+		//, std::vector<ownerTableEntry> *ownerTable)
+{
+  std::string buffer(1024, ' ');
+  //Discard first 3 lines:
+  std::getline(meshFile, buffer);
+  std::getline(meshFile, buffer);
+  std::getline(meshFile, buffer);
+  
+  meshFile >> *numberOfElements;
+  meshFile >> *numberOfPoints;
+  
+  //Discard rest of line
+  std::getline(meshFile, buffer);
+  
+  meshFile >> *numberOfDomains;
+  
+  //Discard rest of the line:
+  std::getline(meshFile, buffer);
+  
+  //Discard next 8 lines:
+  std::getline(meshFile, buffer);
+  std::getline(meshFile, buffer);
+  std::getline(meshFile, buffer);
+  std::getline(meshFile, buffer);
+  std::getline(meshFile, buffer);
+  std::getline(meshFile, buffer);
+  std::getline(meshFile, buffer);
+  std::getline(meshFile, buffer);
+
+  for (int domain = 0; domain < *numberOfDomains; ++domain) {
+    int buf;
+    int numNodes;
+    meshFile >> buf;
+    if (buf != domain) {
+      throw std::runtime_error("buf does not match domain");
+    }
+    meshFile >> numNodes;
+    //Discard rest of the line
+    std::getline(meshFile, buffer);
+    
+    for (int node = 0; node < numNodes; ++node) {
+      int nodeNum;
+      meshFile >> nodeNum;
+    }
+    
+    // throw away the rest of the line
+    std::getline(meshFile, buffer);
+  }
+  // Throw away another line
+  std::getline(meshFile, buffer);
+  for (int node = 0; node < *numberOfPoints; node++) {
+    //    ownerTableEntry thisOwnerTableEntry;
+    int global_label;
+    int local_label;
+    int owner;
+    meshFile >> global_label;
+    meshFile >> owner;
+    meshFile >> local_label;
+    
+    //    thisOwnerTableEntry.globalID=global_label;
+    //    thisOwnerTableEntry.ownerID=owner;
+    //    thisOwnerTableEntry.localID=local_label;
+    
+    std::getline(meshFile, buffer);//discard rest of line
+    
+    //    ownerTable->push_back(thisOwnerTableEntry);
+  }            
+}    

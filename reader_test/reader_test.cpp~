@@ -1,0 +1,10 @@
+#include "fort80reader.h"
+#include <iostream>
+#include <fstream>
+#include <vector>
+
+int main(int argc, char *argv[])
+{
+  std::ifstream fort80File;
+  openfort80File(fort80File);
+}

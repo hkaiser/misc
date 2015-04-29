@@ -1,0 +1,8 @@
+#include <iostream>
+#include <fstream>
+#include <vector>
+
+void openfort80File(std::ifstream& meshFile);
+void readfort80(std::ifstream& meshFile, int *numberOfDomains, int *numberOfElements, int *numberOfPoints);
+
+//, std::vector<ownerTableEntry> *ownerTable
