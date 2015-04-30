@@ -1,6 +1,7 @@
 #include "fort80reader.h"
 #include "file_opener.h"
 #include "fort15reader.h"
+#include "fortdgreader.h"
 #include <iostream>
 #include <fstream>
 #include <vector>
@@ -59,10 +60,39 @@ int main(int argc, char *argv[])
     file_opener(fortdgfilename, fortdgfile);
     file_opener(DG18filename, DG18file);
 
+    fortdg fortdgvalues_here = readfortdg(fortdgfile);
+
     // Read data from files
     fort15 fort15values_here = readfort15(fort15file);
     
-    std::cout << "RUNDES = " << fort15values_here.RUNDES << std::endl;
+    if (false) {
+      std::cout << 
+
+      std::cout << "RUNDES  = " << fort15values_here.RUNDES  << std::endl;
+      std::cout << "RUNID   = " << fort15values_here.RUNID   << std::endl;
+      std::cout << "NFOVER  = " << fort15values_here.NFOVER  << std::endl;
+      std::cout << "NABOUT  = " << fort15values_here.NABOUT  << std::endl;
+      std::cout << "NSCREEN = " << fort15values_here.NSCREEN << std::endl;
+      std::cout << "IHOT    = " << fort15values_here.IHOT    << std::endl;
+      std::cout << "ICS     = " << fort15values_here.ICS     << std::endl;
+      std::cout << "IM      = " << fort15values_here.IM      << std::endl;
+      std::cout << "NOLIBF  = " << fort15values_here.NOLIBF  << std::endl;
+      std::cout << "NOLIFA  = " << fort15values_here.NOLIFA  << std::endl;
+      std::cout << "NOLICA  = " << fort15values_here.NOLICA  << std::endl;
+      std::cout << "NOLICAT = " << fort15values_here.NOLICAT << std::endl;
+      std::cout << "NWP     = " << fort15values_here.NWP     << std::endl;
+      std::cout << "NCOR    = " << fort15values_here.NCOR    << std::endl;
+      std::cout << "NTIP    = " << fort15values_here.NTIP    << std::endl;
+      std::cout << "NWS     = " << fort15values_here.NWS     << std::endl;
+      std::cout << "NRAMP   = " << fort15values_here.NRAMP   << std::endl;
+      std::cout << "G       = " << fort15values_here.G       << std::endl;
+      std::cout << "TAU0    = " << fort15values_here.TAU0    << std::endl;
+      std::cout << "DTDP    = " << fort15values_here.DTDP    << std::endl;
+      std::cout << "DT      = " << fort15values_here.DT      << std::endl;
+      std::cout << "STATIM  = " << fort15values_here.STATIM  << std::endl;
+      std::cout << "REFTIM  = " << fort15values_here.REFTIM  << std::endl;
+    }    
+
   }
 
 }
