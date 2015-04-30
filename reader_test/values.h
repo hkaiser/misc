@@ -1,4 +1,4 @@
-struct fort15 {
+struct values {
   std::string RUNDES;
   std::string RUNID;
   int NFOVER;
@@ -7,6 +7,7 @@ struct fort15 {
   int IHOT;
   int ICS;
   int IM;
+  bool C2DDI;
   int NOLIBF;
   int NOLIFA;
   int NOLICA;
@@ -22,5 +23,23 @@ struct fort15 {
   double DT;
   double STATIM;
   double REFTIM;
+  double RNDAY;
+  double DRAMP;
+  double A00;
+  double B00;
+  double C00;
+  double H0;
+  double SLAM0;
+  double SFEA0;
+  double CF;
+  double ESLM;
+  int CORI;
+  int NTIF;
+  int NBFR;
+  double ANGINN;
+  int NFFR;
   
+  
+
+
 };

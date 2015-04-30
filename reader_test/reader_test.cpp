@@ -1,6 +1,6 @@
 #include "fort80reader.h"
 #include "file_opener.h"
-#include "fort15reader.h"
+#include "read_input.h"
 #include "fortdgreader.h"
 #include <iostream>
 #include <fstream>
@@ -60,37 +60,69 @@ int main(int argc, char *argv[])
     file_opener(fortdgfilename, fortdgfile);
     file_opener(DG18filename, DG18file);
 
+    // CALL InitNAModule()  askclint
+
     fortdg fortdgvalues_here = readfortdg(fortdgfile);
 
-    // Read data from files
-    fort15 fort15values_here = readfort15(fort15file);
-    
-    if (false) {
-      std::cout << 
+    double RHOWAT0 = 1000.0; //from line 203 in read_input.F askclint
 
-      std::cout << "RUNDES  = " << fort15values_here.RUNDES  << std::endl;
-      std::cout << "RUNID   = " << fort15values_here.RUNID   << std::endl;
-      std::cout << "NFOVER  = " << fort15values_here.NFOVER  << std::endl;
-      std::cout << "NABOUT  = " << fort15values_here.NABOUT  << std::endl;
-      std::cout << "NSCREEN = " << fort15values_here.NSCREEN << std::endl;
-      std::cout << "IHOT    = " << fort15values_here.IHOT    << std::endl;
-      std::cout << "ICS     = " << fort15values_here.ICS     << std::endl;
-      std::cout << "IM      = " << fort15values_here.IM      << std::endl;
-      std::cout << "NOLIBF  = " << fort15values_here.NOLIBF  << std::endl;
-      std::cout << "NOLIFA  = " << fort15values_here.NOLIFA  << std::endl;
-      std::cout << "NOLICA  = " << fort15values_here.NOLICA  << std::endl;
-      std::cout << "NOLICAT = " << fort15values_here.NOLICAT << std::endl;
-      std::cout << "NWP     = " << fort15values_here.NWP     << std::endl;
-      std::cout << "NCOR    = " << fort15values_here.NCOR    << std::endl;
-      std::cout << "NTIP    = " << fort15values_here.NTIP    << std::endl;
-      std::cout << "NWS     = " << fort15values_here.NWS     << std::endl;
-      std::cout << "NRAMP   = " << fort15values_here.NRAMP   << std::endl;
-      std::cout << "G       = " << fort15values_here.G       << std::endl;
-      std::cout << "TAU0    = " << fort15values_here.TAU0    << std::endl;
-      std::cout << "DTDP    = " << fort15values_here.DTDP    << std::endl;
-      std::cout << "DT      = " << fort15values_here.DT      << std::endl;
-      std::cout << "STATIM  = " << fort15values_here.STATIM  << std::endl;
-      std::cout << "REFTIM  = " << fort15values_here.REFTIM  << std::endl;
+    // Read data from files
+    values values_here = read_input(fort15file, fort14file);
+    
+    // Read MNP and MNE from fort.14 file,
+    // then duplicate ALLOC_MAIN1() here   askclint about alloc_main1
+
+    // call a read fort.14 subroutine here. start on line 1242 of read_input.F
+    // CALL INVCP , just a coord transform
+
+    if (domainID == 0) {
+      std::cout << "dgswe     = " << fortdgvalues_here.dgswe   << std::endl;
+      std::cout << "dgswe     = " << fortdgvalues_here.dgswe     << std::endl;
+      std::cout << "dg_to_cg  = " << fortdgvalues_here.dg_to_cg  << std::endl;
+      std::cout << "modal_ic  = " << fortdgvalues_here.modal_ic  << std::endl;
+      std::cout << "padapt    = " << fortdgvalues_here.padapt    << std::endl;
+      std::cout << "pflag     = " << fortdgvalues_here.pflag     << std::endl;
+      std::cout << "gflag     = " << fortdgvalues_here.gflag     << std::endl;
+      std::cout << "dis_tol   = " << fortdgvalues_here.dis_tol   << std::endl;
+      std::cout << "pl        = " << fortdgvalues_here.pl        << std::endl;
+      std::cout << "ph        = " << fortdgvalues_here.ph        << std::endl;
+      std::cout << "px        = " << fortdgvalues_here.px        << std::endl;
+      std::cout << "slimit    = " << fortdgvalues_here.slimit    << std::endl;
+      std::cout << "plimit    = " << fortdgvalues_here.plimit    << std::endl;
+      std::cout << "k         = " << fortdgvalues_here.k         << std::endl;
+      std::cout << "ks        = " << fortdgvalues_here.ks        << std::endl;
+      std::cout << "L         = " << fortdgvalues_here.L         << std::endl;
+      std::cout << "nelem     = " << fortdgvalues_here.nelem     << std::endl;
+      std::cout << "fluxtype  = " << fortdgvalues_here.fluxtype  << std::endl;
+      std::cout << "rk_stage  = " << fortdgvalues_here.rk_stage  << std::endl;
+      std::cout << "rk_order  = " << fortdgvalues_here.rk_order  << std::endl;
+      std::cout << "slopeflag = " << fortdgvalues_here.slopeflag << std::endl;
+      std::cout << "weight    = " << fortdgvalues_here.weight    << std::endl;
+      std::cout << "sedflag   = " << fortdgvalues_here.sedflag   << std::endl;
+      
+      std::cout << "RUNDES    = " << values_here.RUNDES    << std::endl;
+      std::cout << "RUNID     = " << values_here.RUNID     << std::endl;
+      std::cout << "NFOVER    = " << values_here.NFOVER    << std::endl;
+      std::cout << "NABOUT    = " << values_here.NABOUT    << std::endl;
+      std::cout << "NSCREEN   = " << values_here.NSCREEN   << std::endl;
+      std::cout << "IHOT      = " << values_here.IHOT      << std::endl;
+      std::cout << "ICS       = " << values_here.ICS       << std::endl;
+      std::cout << "IM        = " << values_here.IM        << std::endl;
+      std::cout << "NOLIBF    = " << values_here.NOLIBF    << std::endl;
+      std::cout << "NOLIFA    = " << values_here.NOLIFA    << std::endl;
+      std::cout << "NOLICA    = " << values_here.NOLICA    << std::endl;
+      std::cout << "NOLICAT   = " << values_here.NOLICAT   << std::endl;
+      std::cout << "NWP       = " << values_here.NWP       << std::endl;
+      std::cout << "NCOR      = " << values_here.NCOR      << std::endl;
+      std::cout << "NTIP      = " << values_here.NTIP      << std::endl;
+      std::cout << "NWS       = " << values_here.NWS       << std::endl;
+      std::cout << "NRAMP     = " << values_here.NRAMP     << std::endl;
+      std::cout << "G         = " << values_here.G         << std::endl;
+      std::cout << "TAU0      = " << values_here.TAU0      << std::endl;
+      std::cout << "DTDP      = " << values_here.DTDP      << std::endl;
+      std::cout << "DT        = " << values_here.DT        << std::endl;
+      std::cout << "STATIM    = " << values_here.STATIM    << std::endl;
+      std::cout << "REFTIM    = " << values_here.REFTIM    << std::endl;
     }    
 
   }

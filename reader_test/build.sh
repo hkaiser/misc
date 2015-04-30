@@ -1,1 +1,1 @@
-g++ -o reader_test fortdgreader.cpp fort15reader.cpp fort80reader.cpp file_opener.cpp reader_test.cpp
+g++ -std=c++11 -o reader_test fortdgreader.cpp read_input.cpp fort80reader.cpp file_opener.cpp reader_test.cpp
