@@ -1,4 +1,5 @@
 struct values {
+  // fort.15 values
   std::string RUNDES;
   std::string RUNID;
   int NFOVER;

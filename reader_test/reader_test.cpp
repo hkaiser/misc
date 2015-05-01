@@ -60,8 +60,6 @@ int main(int argc, char *argv[])
     file_opener(fortdgfilename, fortdgfile);
     file_opener(DG18filename, DG18file);
 
-    // CALL InitNAModule()  askclint
-
     fortdg fortdgvalues_here = readfortdg(fortdgfile);
 
     double RHOWAT0 = 1000.0; //from line 203 in read_input.F askclint

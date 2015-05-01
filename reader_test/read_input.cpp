@@ -11,6 +11,8 @@ values read_input(
 {
   values values_here;
 
+  // CALL InitNAModule()  askclint no nodal attr
+
   std::string buffer(1024, ' ');
 
   //read RUNDES  string, 30 characters
@@ -28,8 +30,6 @@ values read_input(
   //read NSCREEN
   fort15file >> values_here.NSCREEN;
   std::getline(fort15file, buffer);
-
-  //NSCREEN_INC = NSCREEN 
 
   //read IHOT
   fort15file >> values_here.IHOT;
@@ -69,6 +69,7 @@ values read_input(
   std::getline(fort15file, buffer);
 
   // CALL ReadNodalAttr( ... )
+  
 
   //read NCOR
   fort15file >> values_here.NCOR;
