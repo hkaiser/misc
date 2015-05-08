@@ -3,11 +3,11 @@ SUBROUTINE INIT(N, alive_c_ptr)
   IMPLICIT NONE
   
   type (c_ptr) :: alive_c_ptr
-  integer (c_int), allocatable, target :: alive(:)
+  integer (c_int), allocatable, target, save :: alive(:)
  
   INTEGER :: I, N
   
-  N=31
+  N=10
   
   ALLOCATE(ALIVE(N))
 
