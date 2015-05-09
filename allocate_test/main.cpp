@@ -1,15 +1,15 @@
 #include <iostream>
 extern"C" {
-  void init_(int *n, int** alive);
+  void init_(int *n, double** alive);
 }
 
 extern"C" {
-  void print_(int *n, int** alive);
+  void print_(int *n, double** alive);
 }
 
 int main() {  
   int n;
-  int *alive;
+  double *alive;
 
   std::cout << "calling init" << std::endl; 
   init_(&n,&alive);
