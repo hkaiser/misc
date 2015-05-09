@@ -1,44 +1,44 @@
-SUBROUTINE INIT(N, alive_c_ptr)
+subroutine init(n, alive_c_ptr)
   use, intrinsic :: iso_c_binding
-  IMPLICIT NONE
+  implicit none
   
   type (c_ptr) :: alive_c_ptr
   real (c_double), allocatable, target, save :: alive(:)
  
-  INTEGER :: I, N
+  integer :: i, n
   
   real (c_double) :: j
 
-  N=1000000
+  n=1
   
-  ALLOCATE(ALIVE(N))
+  allocate(alive(n))
   
-  DO I=1,N
+  do I=1,n
      call random_number(j)
-     ALIVE(I) = j
-  ENDDO
+     alive(i) = j
+  enddo
 
-  DO I=1,N
-     WRITE(12,*) alive(I)
-  ENDDO  
+  do i=1,n
+     write(12,*) alive(I)
+  enddo  
 
   alive_c_ptr = c_loc(alive(1))
 
-END SUBROUTINE INIT
+end subroutine init
 
-SUBROUTINE PRINT(N, alive_c_ptr)
+subroutine print(n, alive_c_ptr)
   use, intrinsic :: iso_c_binding
-  IMPLICIT NONE
+  implicit none
 
-  INTEGER :: N,I
+  integer :: n,i
   type (c_ptr), intent (in) :: alive_c_ptr
   real (c_double), pointer :: alive(:)
   
-  call c_f_pointer(alive_c_ptr, alive,[N])
+  call c_f_pointer(alive_c_ptr, alive,[n])
 
-  PRINT*, "N = ", N
-  DO I=1,N
-     WRITE(13,*) alive(I)
-  ENDDO  
+  print*, "n = ", n
+  do i=1,n
+     write(13,*) alive(i)
+  enddo  
 
-END SUBROUTINE PRINT
+end subroutine print
