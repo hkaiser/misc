@@ -3,13 +3,13 @@ subroutine init(n, alive_c_ptr)
   implicit none
   
   type (c_ptr) :: alive_c_ptr
-  real (c_double), allocatable, target, save :: alive(:)
+  real (c_double), allocatable, target :: alive(:)
  
   integer :: i, n
   
   real (c_double) :: j
 
-  n=1
+  n=10
   
   allocate(alive(n))
   
@@ -19,7 +19,7 @@ subroutine init(n, alive_c_ptr)
   enddo
 
   do i=1,n
-     write(12,*) alive(I)
+     write(*,*) alive(I)
   enddo  
 
   alive_c_ptr = c_loc(alive(1))
@@ -38,7 +38,7 @@ subroutine print(n, alive_c_ptr)
 
   print*, "n = ", n
   do i=1,n
-     write(13,*) alive(i)
+     write(*,*) alive(i)
   enddo  
 
 end subroutine print

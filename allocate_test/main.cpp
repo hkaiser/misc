@@ -10,8 +10,20 @@ extern"C" {
 int main() {  
   int n;
   double *alive;
+  double *alive2;
+
+
+  std::cout << "initializing alive" << std::endl;
   init_(&n,&alive);
-  std::cout << "n=" << n << std::endl;
+
+  std::cout << "initializing alive2" << std::endl;
+  init_(&n,&alive2);
+
+  std::cout << "printing alive" << std::endl;
   print_(&n,&alive);
+
+  std::cout << "printing alive2" << std::endl;
+  print_(&n,&alive2);
+
   return 0;
 }
