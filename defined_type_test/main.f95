@@ -1,28 +1,38 @@
 !      include 'kernel.f95'
-      include 'global.f95'
+  include 'global.f95'
+  
+  program main
+    use global
+    implicit none
+    
+    integer :: time, temp, n_timesteps
+    type(global_type) :: g1
+    type(global_type) :: g2
+    
+    n_timesteps = 7
 
-      program main
-      
-      integer :: i,j
-      
-      do i=1,n
-!         alive(i) = 0
-!         numneighbors(i) = 2
-!         neighbors(1,i) = i-1
-!         neighbors(2,i) = i+1
-      end do
-      
-!      alive(1) = 1
+    call init(g1,1)
+    call init(g2,2)
+    
+    ! seed single alive cell
+    g1%alive(3) = 1   
 
-      !periodic boundary...
-!      neighbors(1,1) = n
-!      neighbors(2,n) = 1
+    ! timestepping loop
+    do time=1,n_timesteps
+       print*,'timestep'
 
-!      call kernel(n,alive,numneighbors,neighbors)
-!      call kernel(n,alive,numneighbors,neighbors)
+       call kernel(g1)
+       call kernel(g2)
+       
+       ! boundary exchange
+       temp=g1%alive(g1%n)
+       g1%alive(g1%n)=g2%alive(1)
+       g2%alive(1)=temp
+       
+    end do
 
-      do i=1,n
-!         print*, i, alive(i)
-      enddo
+    call print(g1)
+    call print(g2)
 
-      end program main
+  end program main
+  
