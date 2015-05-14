@@ -1,3 +1,5 @@
+include 'global.f95'
+
 subroutine init(n, alive_c_ptr)
   use, intrinsic :: iso_c_binding
   implicit none
@@ -44,3 +46,6 @@ subroutine print(n, alive_c_ptr2)
   enddo  
 
 end subroutine print
+
+subroutine kernel()
+end subroutine kernel

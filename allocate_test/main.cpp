@@ -1,11 +1,4 @@
-#include <iostream>
-#include <vector>
-extern"C" {
-  void init_(int *n, double** alive);
-}
-
-extern"C" {
-  void print_(int *n, double** alive);
+#include <iostream>;
 }
 
 int main() {  
